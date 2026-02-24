@@ -64,11 +64,11 @@ This way Python controls the loop. The LLM can't skip clauses or reorder them.
 
 ### Section detection
 
-The document has multiple sections with independent clause numbering (Part II clauses 1-43, then Shell Additional Clauses 1-43, then Essar Rider Clauses 1-22). The sectioner finds these by looking for numbering restarts — when clause numbers jump from something high back to 1 or 2, and there's a title header nearby, that's a section boundary.
+Charter parties often have multiple sections with independent clause numbering that restarts at 1. The sectioner detects these by looking for numbering restarts — when clause numbers jump from something high back to 1 or 2, and there's a title header nearby, that's a section boundary.
 
 ### Margin notes
 
-Part II has a two-column layout with clause titles in a narrow left sidebar. These margin notes shouldn't be included in the text sent to the LLM. We detect them using bounding box geometry: per page, find the main content column (the x-position bucket with the most text), then tag anything whose right edge doesn't reach it.
+Some sections use a two-column layout with clause titles in a narrow left sidebar. These margin notes shouldn't be included in the text sent to the LLM. We detect them using bounding box geometry: per page, find the main content column (the x-position bucket with the most text), then tag anything whose right edge doesn't reach it.
 
 ## Project Structure
 
