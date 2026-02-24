@@ -3,9 +3,6 @@
 install:
 	uv sync --all-extras
 
-test:
-	uv run pytest tests/ -v
-
 run:
 	uv run python -m charter_parser.main voyage-charter-example.pdf
 

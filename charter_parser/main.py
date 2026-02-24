@@ -7,6 +7,10 @@ import sys
 import time
 from pathlib import Path
 
+from dotenv import load_dotenv
+
+load_dotenv()
+
 from charter_parser.pipeline.loader import load_document
 from charter_parser.pipeline.sectioner import discover_sections
 from charter_parser.pipeline.enumerator import enumerate_clauses, should_retry

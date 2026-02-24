@@ -44,46 +44,67 @@ DOCUMENT SECTION — {section_title}:
 Return ONLY the JSON object."""
 
 
+_MAX_EXTRACT_RETRIES = 2
+
+
 async def _extract_single(
     client: anthropic.AsyncAnthropic,
     section: SectionData,
     number: int,
 ) -> dict[str, Any]:
-    try:
-        response = await client.messages.create(
-            model="claude-sonnet-4-6",
-            max_tokens=2048,
-            messages=[{
-                "role": "user",
-                "content": EXTRACT_PROMPT.format(
-                    number=number,
-                    section_title=section["title"],
-                    text=section["text"],
+    last_exc: Exception | None = None
+    for attempt in range(_MAX_EXTRACT_RETRIES + 1):
+        try:
+            response = await client.messages.create(
+                model="claude-sonnet-4-6",
+                max_tokens=2048,
+                messages=[{
+                    "role": "user",
+                    "content": EXTRACT_PROMPT.format(
+                        number=number,
+                        section_title=section["title"],
+                        text=section["text"],
+                    )
+                }]
+            )
+            raw = _FENCE_RE.sub("", response.content[0].text).strip()
+            if not raw:
+                raise ValueError(
+                    f"Empty response (stop_reason={response.stop_reason})"
                 )
-            }]
-        )
-        raw = _FENCE_RE.sub("", response.content[0].text).strip()
-        data = json.loads(raw)
-        data["section_index"] = section["index"]
-        return data
+            data = json.loads(raw)
+            data["section_index"] = section["index"]
+            return data
 
-    except Exception as exc:
-        logger.error("Extraction failed for %s clause %d: %s", section["title"], number, exc)
-        return {
-            "number": number,
-            "title": f"Clause {number}",
-            "text": "",
-            "section_index": section["index"],
-        }
+        except Exception as exc:
+            last_exc = exc
+            if attempt < _MAX_EXTRACT_RETRIES:
+                logger.warning(
+                    "Extraction attempt %d/%d failed for %s clause %d: %s — retrying",
+                    attempt + 1, _MAX_EXTRACT_RETRIES + 1,
+                    section["title"], number, exc,
+                )
+            else:
+                logger.error(
+                    "Extraction failed for %s clause %d after %d attempts: %s",
+                    section["title"], number, _MAX_EXTRACT_RETRIES + 1, last_exc,
+                )
+
+    return {
+        "number": number,
+        "title": f"Clause {number}",
+        "text": "",
+        "section_index": section["index"],
+    }
 
 
 async def _extract_section(
     section: SectionData,
     clause_numbers: list[int],
 ) -> list[dict[str, Any]]:
-    client = anthropic.AsyncAnthropic()
-    tasks = [_extract_single(client, section, n) for n in clause_numbers]
-    return list(await asyncio.gather(*tasks))
+    async with anthropic.AsyncAnthropic() as client:
+        tasks = [_extract_single(client, section, n) for n in clause_numbers]
+        return list(await asyncio.gather(*tasks))
 
 
 def extract_clauses(state: dict) -> dict:
