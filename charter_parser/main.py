@@ -1,14 +1,4 @@
-#!/usr/bin/env python3
-"""
-main.py — CLI entry point.
-
-Runs the extraction pipeline sequentially:
-  load → section → enumerate (with retry) → extract → assemble
-
-Usage:
-    python -m charter_parser.main voyage-charter-example.pdf
-    python -m charter_parser.main charter.pdf --output output/clauses.json
-"""
+"""CLI entry point for the charter party clause extractor."""
 
 import argparse
 import json

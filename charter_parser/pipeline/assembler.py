@@ -1,9 +1,4 @@
-"""
-pipeline/assembler.py — final assembly and validation.
-
-Ordering is deterministic: sort by (section_index, clause_number).
-No LLM involved. Pure Python.
-"""
+"""Sort clauses in document order and produce final output."""
 
 import logging
 from typing import Any
@@ -12,7 +7,6 @@ logger = logging.getLogger(__name__)
 
 
 def assemble(state: dict) -> dict:
-    """Sort clauses in document order, produce final output."""
     raw_clauses = state.get("raw_clauses", [])
 
     ordered = sorted(
@@ -22,7 +16,7 @@ def assemble(state: dict) -> dict:
 
     clauses: list[dict[str, Any]] = []
     for raw in ordered:
-        text = raw.get("agreed_text", "").strip()
+        text = raw.get("text", "").strip()
         if not text:
             continue
         clauses.append({

@@ -15,9 +15,6 @@ class DocumentElement(TypedDict):
 
 class SectionData(TypedDict):
     title: str
-    prefix: str
     index: int
     elements: list[DocumentElement]
     text: str
-    page_start: int
-    page_end: int

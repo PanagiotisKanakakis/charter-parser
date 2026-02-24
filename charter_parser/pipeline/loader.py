@@ -7,6 +7,7 @@ from collections import defaultdict
 from pathlib import Path
 
 import pdfplumber
+from docling.document_converter import DocumentConverter
 
 from charter_parser.state import DocumentElement
 
@@ -111,8 +112,6 @@ def _detect_margin_notes(raw_items: list[dict]) -> set[int]:
 
 def load_document(state: dict) -> dict:
     """Convert PDF to structured elements. Filters strikethrough, tags margin notes."""
-    from docling.document_converter import DocumentConverter
-
     pdf_path = state["pdf_path"]
     path = Path(pdf_path)
     if not path.exists():

@@ -1,7 +1,5 @@
 """
-Pass 2: extract individual clauses using Sonnet.
-
-One LLM call per clause, all concurrent within each section.
+Extract individual clauses using Sonnet. One LLM call per clause, all concurrent.
 """
 
 import asyncio
@@ -27,25 +25,15 @@ Rules:
 1. "title" — the clause heading in plain text, no markdown.
    If the heading sits beside the number (e.g. "Condition Of vessel  1."),
    use the heading text only.
-2. "agreed_text" — the complete operative clause body including all sub-clauses
+2. "text" — the complete operative clause body including all sub-clauses
    (a), (b), (i), (ii). Preserve paragraph structure with \\n\\n.
    Strip markdown characters (**, *, ##, _) — plain prose only.
-3. "sub_clauses" — if the clause has explicitly labelled sub-clauses
-   list them separately. Otherwise [].
-4. "status" — one of:
-   "unamended"  standard form text, unchanged
-   "amended"    modified from standard form
-   "additional" bespoke clause not in standard form
-5. "references" — list of other clause numbers explicitly cited, e.g. ["15", "32"].
 
 Return a single JSON object:
 {{
   "number": {number},
   "title": "...",
-  "agreed_text": "...",
-  "sub_clauses": [{{"label": "(1)", "text": "..."}}],
-  "status": "unamended|amended|additional",
-  "references": []
+  "text": "..."
 }}
 
 DOCUMENT SECTION — {section_title}:
@@ -76,30 +64,16 @@ async def _extract_single(
         )
         raw = _FENCE_RE.sub("", response.content[0].text).strip()
         data = json.loads(raw)
-
-        data["id"] = f"{section['prefix']}-{number}"
-        data["section"] = section["title"]
         data["section_index"] = section["index"]
-        data["page_range"] = [section["page_start"], section["page_end"]]
-        data["confidence"] = 0.0
-
         return data
 
     except Exception as exc:
-        logger.error("Extraction failed for %s-%s: %s", section["prefix"], number, exc)
+        logger.error("Extraction failed for %s clause %d: %s", section["title"], number, exc)
         return {
-            "id": f"{section['prefix']}-{number}",
             "number": number,
             "title": f"Clause {number}",
-            "agreed_text": "",
-            "sub_clauses": [],
-            "status": "unamended",
-            "references": [],
-            "section": section["title"],
+            "text": "",
             "section_index": section["index"],
-            "page_range": [section["page_start"], section["page_end"]],
-            "confidence": 0.0,
-            "error": str(exc),
         }
 
 
